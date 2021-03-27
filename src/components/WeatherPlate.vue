@@ -3,41 +3,69 @@
         <h2>{{ city }}</h2>
         <div class="temperature-module">
             <img alt="icon" :src="`http://openweathermap.org/img/w/${icon}.png`" />
-            <p><span class="temperature-text">{{ temperature }}</span><span class="temperature-unit">C</span></p>
+            <p><span class="temperature-text">{{ temperatureView }}</span><span class="temperature-unit">C</span></p>
         </div>
         <div class="details-module">
             <p class="humidity-module">Humidity: {{ humidity }}%</p>
             <p class="wind-module">Wind: {{ wind }} kph E</p>
-            <p class="feels-module">Feels like: <span>{{ feels }}</span><span>C</span></p>
+            <p class="feels-module">Feels like: <span>{{ feelsLikeView }}</span><span>C</span></p>
         </div>
     </article>
 </template>
 
 <script>
+    import WeatherService from "@/services/WeatherService.js";
+
     export default {
         name: "WeatherPlate",
         props: {
             city: String,
-            temperature: String,
+            temperature: Number,
             humidity: Number,
             wind: Number,
-            feels: String,
+            feelsLike: Number,
             icon: String
         },
+        computed: {
+            temperatureView: function () {
+                return Math.round(this.temperature) + '°';
+            },
+            feelsLikeView: function () {
+                return Math.round(this.feelsLike) + '°';
+            }
+        },
         created() {
-            console.log("Created: " + this.city);
+            this.temperature = 0;
+            this.humidity = 0;
+            this.wind = 0;
+            this.feelsLike = 0;
+            this.icon = '';
         },
         mounted() {
-            this.temperature = '2°';
-            this.humidity = 89;
-            this.wind = 2;
-            this.feels = '3°';
-            this.icon = '10d';
+            this.updateWeatherByCity(this.city);
+        },
+        methods: {
+            updateWeatherByCity(city) {
+                WeatherService.getCurrentWeatherByCity(city).then(res => {
+                    const data = res.data;
+                    this.temperature = data.temperature;
+                    this.humidity = data.humidity;
+                    this.wind = data.wind;
+                    this.feelsLike = data.feels_like;
+                    this.icon = data.icon;
+                }).catch(error => {
+                    console.log(error);
+                });
+            }
         }
     }
 </script>
 
 <style scoped>
+    h2 {
+        margin-top: 0;
+    }
+
     .weather-plate {
         width: 100%;
     }
@@ -53,6 +81,7 @@
 
     .details-module>p {
         margin-top: 0;
+        margin-bottom: 0.7em;
     }
 
     .temperature-module>img {
@@ -71,6 +100,10 @@
     .temperature-unit {
         font-size: 2em;
         vertical-align: top;
+    }
+
+    .details-module {
+        text-align: left;
     }
 
 </style>
